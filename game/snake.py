@@ -15,11 +15,6 @@ RED = (255, 0, 0)
 BLUE = (0, 0, 255)
 
 
-class Directions(Enum):
-    UP = 1,
-    RIGHT = 2,
-    DOWN = 3,
-    LEFT = 4
 
 
 class Snake:
@@ -34,7 +29,7 @@ class Snake:
 
         self.head = Point(self.WINDOWSIZE[0] / 2, self.WINDOWSIZE[1] / 2)
         self.snake = [self.head, Point(self.head.x - self.BLOCKSIZE, self.head.y), Point(self.head.x  - 2 * self.BLOCKSIZE, self.head.y)]
-        self.mov_dir = Directions.RIGHT
+        self.mov_dir = pygame.K_RIGHT
         self.place_food()
         
     def place_food(self):
@@ -44,48 +39,23 @@ class Snake:
         notfound = True
 
         while True:
+            new_point = None
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     quit(0)
                 if event.type == pygame.KEYDOWN:
-                    match event.dict.get("key"):
-                        case pygame.K_UP:
-                            self.mov_dir = Directions.UP
-                            self.snake.insert(0, Point(self.head.x, self.head.y - self.BLOCKSIZE))
-                            notfound = False
-                            break
-                        case pygame.K_DOWN:
-                            self.mov_dir = Directions.DOWN
-                            self.snake.insert(0, Point(self.head.x, self.head.y + self.BLOCKSIZE))
-                            notfound = False
-                            break
-                        case pygame.K_LEFT:
-                            self.mov_dir = Directions.LEFT
-                            self.snake.insert(0, Point(self.head.x - self.BLOCKSIZE, self.head.y))
-                            notfound = False
-                            break
-                        case pygame.K_RIGHT:
-                            self.mov_dir = Directions.RIGHT
-                            self.snake.insert(0, Point(self.head.x + self.BLOCKSIZE, self.head.y))
-                            notfound = False
-                            break
-                        case _:
-                            notfound = True
-            if notfound:
-                match self.mov_dir:
-                    case Directions.UP:
-                        self.snake.insert(0, Point(self.head.x, self.head.y - self.BLOCKSIZE))
-                    case Directions.DOWN:
-                        self.snake.insert(0, Point(self.head.x, self.head.y + self.BLOCKSIZE))
-                    case Directions.LEFT:
-                        self.snake.insert(0, Point(self.head.x - self.BLOCKSIZE, self.head.y))
-                    case Directions.RIGHT:
-                        self.snake.insert(0, Point(self.head.x + self.BLOCKSIZE, self.head.y))
-                            #Add code to go the same direction as before
-            self.head = self.snake[0]
+                    val = event.dict.get("key")
+                    new_point = self.get_new_point(val)
+                    if new_point != None:
+                        break
+
+            if new_point == None:
+                new_point = self.get_new_point(self.mov_dir)
+
+            self.snake.insert(0, new_point)
+            self.head = new_point
             self.snake.pop(-1)
-            print(self.snake)
             self.create_environment()
             time.sleep(0.5)
 
@@ -100,6 +70,22 @@ class Snake:
 
     def move(self):
         pass
+
+    def get_new_point(self, val):
+        if val == pygame.K_DOWN:
+            self.mov_dir = pygame.K_DOWN
+            return Point(self.head.x, self.head.y + self.BLOCKSIZE)
+        elif val == pygame.K_UP:
+            self.mov_dir = pygame.K_UP
+            return Point(self.head.x, self.head.y - self.BLOCKSIZE)
+        elif val == pygame.K_LEFT:
+            self.mov_dir = pygame.K_LEFT
+            return Point(self.head.x - self.BLOCKSIZE, self.head.y)
+        elif val == pygame.K_RIGHT:
+            self.mov_dir = pygame.K_RIGHT
+            return Point(self.head.x + self.BLOCKSIZE, self.head.y)
+        else:
+            return None
 
 if __name__ == "__main__":
     snake = Snake()
