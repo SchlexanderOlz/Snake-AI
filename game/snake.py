@@ -37,7 +37,6 @@ class Snake:
         
     def run(self):
         notfound = True
-
         while True:
             new_point = None
             for event in pygame.event.get():
@@ -55,9 +54,13 @@ class Snake:
 
             self.snake.insert(0, new_point)
             self.head = new_point
+            self.is_food()
+            if self.is_collision(self.head):
+                print("You lost!")
+                quit(0)
             self.snake.pop(-1)
             self.create_environment()
-            time.sleep(0.5)
+            time.sleep(0.2)
 
     
     def create_environment(self):
@@ -68,8 +71,19 @@ class Snake:
         pygame.draw.rect(self.display, BLUE, pygame.Rect(self.food.x, self.food.y, self.BLOCKSIZE, self.BLOCKSIZE))
         pygame.display.flip()
 
-    def move(self):
-        pass
+
+    def is_collision(self, point):
+        return point in self.snake[1:] or point.x >= self.WINDOWSIZE[0] \
+           or point.x < 0 or point.y >= self.WINDOWSIZE[1] or point.y < 0
+
+    def is_food(self):
+        if self.head == self.food:
+            if self.is_collision(Point(self.snake[-1].x - self.BLOCKSIZE, self.snake[-1].y)):
+                new_point = Point(self.snake[-1].x, self.snake[-1].y - self.BLOCKSIZE)
+            else:
+                new_point = Point(self.snake[-1].x - self.BLOCKSIZE, self.snake[-1].y)
+            self.snake.append(new_point)
+            self.place_food()
 
     def get_new_point(self, val):
         if val == pygame.K_DOWN:
