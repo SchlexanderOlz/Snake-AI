@@ -13,7 +13,7 @@ BLACK = (0, 0, 0)
 RED = (255, 0, 0)
 BLUE = (0, 0, 255)
 
-SPEED = 0.1
+SPEED = 0.05
 
 DIRECTIONS = [pygame.K_RIGHT, pygame.K_DOWN, pygame.K_LEFT, pygame.K_UP]
 
@@ -32,6 +32,7 @@ class Snake:
         self.is_agent_controlled = agent_controlled
         if self.is_agent_controlled:
             self.reward = 0
+            self.last_distance_point = 0
 
         self.reset()
         
@@ -42,6 +43,8 @@ class Snake:
         self.frame_iteration = 0
         self.score = 0
         self.place_food()
+        if self.is_agent_controlled:
+            self.last_distance_point = self.calculate_distance_to_point(self.head, self.food)
 
 
     def place_food(self):
@@ -68,9 +71,9 @@ class Snake:
                     if new_point != None:
                         break
         else:
-            if numpy.array_equal(move_dir, Direction(False, True, False)):
+            if numpy.array_equal(move_dir, [0, 1, 0]):
                 self.mov_dir = DIRECTIONS[(DIRECTIONS.index(self.mov_dir) + 1) % 4]
-            elif numpy.array_equal(move_dir, Direction(True, False, False)):
+            elif numpy.array_equal(move_dir, [1, 0, 0]):
                 self.mov_dir = DIRECTIONS[(DIRECTIONS.index(self.mov_dir) - 1) % 4]
 
         if new_point == None:
@@ -79,18 +82,25 @@ class Snake:
         self.snake.insert(0, new_point)
         self.head = new_point
         is_food = self.handle_food()
-        if self.is_collision(self.head) or self.frame_iteration > 100 * len(self.snake):
+        if self.is_collision(self.head) or self.frame_iteration > 80 * len(self.snake):
             print("You lost!")
             print("Score: {}".format(self.score))
+            temp = self.score
             self.reset()
             self.reward = -10
             end = True
         else:
             if not is_food:
-                self.reward = 0
+                distance = self.calculate_distance_to_point(self.head, self.food)
+                if distance < self.last_distance_point:
+                    self.reward = 0.03
+                    self.last_distance_point = distance
+                else:
+                    self.reward = -0.05
             self.snake.pop(-1)
+            temp = self.score
         self.create_environment()
-        return self.reward, self.score, end
+        return self.reward, temp, end
 
     
     def create_environment(self):
@@ -134,6 +144,10 @@ class Snake:
             return Point(self.head.x + self.BLOCKSIZE, self.head.y)
         else:
             return None
+        
+    def calculate_distance_to_point(self, point_a:Point, point_b:Point):
+        return abs(point_a.x - point_b.x) + abs(point_a.y - point_b.y)
+        
 
 #if __name__ == "__main__":
     #snake = Snake()
