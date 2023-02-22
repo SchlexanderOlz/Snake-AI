@@ -87,10 +87,11 @@ class Snake:
             print("Score: {}".format(self.score))
             temp = self.score
             self.reset()
-            self.reward = -10
+            if self.is_agent_controlled:
+                self.reward = -10
             end = True
         else:
-            if not is_food:
+            if not is_food and self.is_agent_controlled:
                 distance = self.calculate_distance_to_point(self.head, self.food)
                 if distance < self.last_distance_point:
                     self.reward = 0.03
@@ -100,7 +101,8 @@ class Snake:
             self.snake.pop(-1)
             temp = self.score
         self.create_environment()
-        return self.reward, temp, end
+        if self.is_agent_controlled:
+            return self.reward, temp, end
 
     
     def create_environment(self):
@@ -125,7 +127,8 @@ class Snake:
             self.snake.append(new_point)
             self.place_food()
             self.score += 1
-            self.reward = 10
+            if self.is_agent_controlled:
+                self.reward = 10
             return True
         return False
 
@@ -149,7 +152,7 @@ class Snake:
         return abs(point_a.x - point_b.x) + abs(point_a.y - point_b.y)
         
 
-#if __name__ == "__main__":
-    #snake = Snake()
-  #  while True:
-     #   print(snake.run([0, 1, 0]))
+if __name__ == "__main__":
+    snake = Snake(agent_controlled=False)
+    while True:
+        snake.run()

@@ -9,7 +9,7 @@ import plot
 
 MAX_MEMORY = 100000
 BATCH_SIZE = 1000
-LR = 0.01
+LR = 0.0001
 GENERAL_RANDOMNESS = 100
 
 class Agent:
