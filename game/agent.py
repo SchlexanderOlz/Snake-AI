@@ -1,4 +1,4 @@
-from snake import Snake, Point, DIRECTIONS
+from snake import Snake, Point, DIRECTIONS, SPEED
 import torch
 import random
 from collections import deque
@@ -6,18 +6,21 @@ from model import Liner_QNet, QTrainer
 import numpy as np
 import pygame
 import plot
+import time
 
 MAX_MEMORY = 100000
 BATCH_SIZE = 1000
-LR = 0.001
+LR = 0.005 # --> 0.002 works well
 GENERAL_RANDOMNESS = 100
+TRAIN_FOR = 100
+
 
 class Agent:
     
     def __init__(self, game:Snake) -> None:
         self.n_games = 0
         self.randomness = 0
-        self.gamma = 0.9
+        self.gamma = 0.8
         self.memory = deque(maxlen=MAX_MEMORY) #--> Pops left when to big
         self.game = game
         self.model = Liner_QNet(11, 256, 3)
@@ -84,6 +87,12 @@ class Agent:
         return final_move
 
 
+    def will_close_loop(self):
+        #TODO --> Write a method to check if the snake will loop inside of itself
+        #Write your programm here
+        pass
+
+
 def train():
     plot_scores = []
     avg = []
@@ -94,7 +103,10 @@ def train():
     while True:
         state_old = agent.get_state()
         last_move = agent.get_action(state_old)
-        reward, score, has_ended = game.run(last_move)
+        if agent.n_games < TRAIN_FOR:
+            reward, score, has_ended = game.run(last_move, graphics=True)
+        else:
+            reward, score, has_ended = game.run(last_move)
         state_new = agent.get_state()
         agent.train_short_mem(state_old, last_move, reward, state_new, has_ended)
         agent.remember(state_old, last_move, reward, state_new, has_ended)

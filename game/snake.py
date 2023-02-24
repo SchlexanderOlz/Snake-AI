@@ -12,6 +12,7 @@ Direction = namedtuple("Direction", "straight, left, right")
 BLACK = (0, 0, 0)
 RED = (255, 0, 0)
 BLUE = (0, 0, 255)
+LIGHT_GREY = (170, 170, 170)
 
 SPEED = 0.05
 
@@ -42,7 +43,9 @@ class Snake:
         self.mov_dir = pygame.K_RIGHT
         self.frame_iteration = 0
         self.score = 0
+        self.obstacles = []
         self.place_food()
+        self.place_obstacles()
         if self.is_agent_controlled:
             self.last_distance_point = self.calculate_distance_to_point(self.head, self.food)
 
@@ -51,11 +54,20 @@ class Snake:
         self.food = Point(random.randint(0, self.blocks_x) * self.BLOCKSIZE, random.randint(0, self.blocks_y) * self.BLOCKSIZE)
         if self.is_collision(self.food):
             self.place_food()
+            
+    def place_obstacles(self):
+        for x in range(self.blocks_x):
+            for y in range(self.blocks_y):
+                if random.randint(0, self.blocks_x // 0.1) == 1:
+                    new_point = Point(x * self.BLOCKSIZE, y * self.BLOCKSIZE)
+                    if not self.is_collision(new_point):
+                        self.obstacles.append(new_point)
 
         
-    def run(self, move_dir = None):
+    def run(self, move_dir = None, graphics=True):
         # for move_dir --> [straigth, left, right]
-        time.sleep(SPEED)
+        if graphics:
+            time.sleep(SPEED)
         end = False
         self.frame_iteration += 1
         new_point = None
@@ -83,8 +95,8 @@ class Snake:
         self.head = new_point
         is_food = self.handle_food()
         if self.is_collision(self.head) or self.frame_iteration > 80 * len(self.snake):
-            print("You lost!")
-            print("Score: {}".format(self.score))
+            #print("You lost!")
+            #print("Score: {}".format(self.score))
             temp = self.score
             self.reset()
             if self.is_agent_controlled:
@@ -94,13 +106,15 @@ class Snake:
             if not is_food and self.is_agent_controlled:
                 distance = self.calculate_distance_to_point(self.head, self.food)
                 if distance < self.last_distance_point:
-                    self.reward = 0.03
+                    self.reward = 0.05
                     self.last_distance_point = distance
                 else:
-                    self.reward = -0.05
+                    self.reward = 0
             self.snake.pop(-1)
             temp = self.score
-        self.create_environment()
+
+        if graphics:
+            self.create_environment()
         if self.is_agent_controlled:
             return self.reward, temp, end
 
@@ -109,14 +123,17 @@ class Snake:
         self.display.fill(BLACK)
         for block in self.snake:
             pygame.draw.rect(self.display, RED, pygame.Rect(block.x, block.y, self.BLOCKSIZE, self.BLOCKSIZE))
-            
+        for block in self.obstacles:
+            pygame.draw.rect(self.display, LIGHT_GREY, pygame.Rect(block.x, block.y, self.BLOCKSIZE, self.BLOCKSIZE))
+        
         pygame.draw.rect(self.display, BLUE, pygame.Rect(self.food.x, self.food.y, self.BLOCKSIZE, self.BLOCKSIZE))
         pygame.display.flip()
 
 
-    def is_collision(self, point):
+    def is_collision(self, point:Point):
         return point in self.snake[1:] or point.x >= self.WINDOWSIZE[0] \
-           or point.x < 0 or point.y >= self.WINDOWSIZE[1] or point.y < 0
+           or point.x < 0 or point.y >= self.WINDOWSIZE[1] or point.y < 0 \
+               or point in self.obstacles
 
     def handle_food(self):
         if self.head == self.food:
