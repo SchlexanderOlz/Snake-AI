@@ -9,10 +9,12 @@ import plot
 import time
 
 MAX_MEMORY = 100000
-BATCH_SIZE = 1000
-LR = 0.005 # --> 0.002 works well
-GENERAL_RANDOMNESS = 100
-TRAIN_FOR = 100
+BATCH_SIZE = 800
+LR = 0.002 # --> 0.002 works well
+GENERAL_RANDOMNESS = 500
+TRAIN_FOR = 1300
+
+GEN_SPEED = 0.05
 
 
 class Agent:
@@ -23,7 +25,7 @@ class Agent:
         self.gamma = 0.8
         self.memory = deque(maxlen=MAX_MEMORY) #--> Pops left when to big
         self.game = game
-        self.model = Liner_QNet(11, 256, 3)
+        self.model = Liner_QNet(11 + (self.game.blocks_x * self.game.blocks_y), 256, 3)
         self.trainer = QTrainer(self.model, lr=LR, gamma=self.gamma)
     
     def get_state(self):
@@ -33,8 +35,8 @@ class Agent:
         dir_r = self.game.mov_dir == pygame.K_RIGHT
         dir_u = self.game.mov_dir == pygame.K_UP
         dir_d = self.game.mov_dir == pygame.K_DOWN
-        
         return np.array([
+            
             #Check for danger ahead
             self.game.is_collision(self.game.get_new_point(self.game.mov_dir)),
             #Check for danger on left side
@@ -50,7 +52,9 @@ class Agent:
             self.game.food.x < self.game.head.x,
             self.game.food.x > self.game.head.x,
             self.game.food.y < self.game.head.y,
-            self.game.food.y > self.game.head.y
+            self.game.food.y > self.game.head.y,
+            
+            *self.game.get_all_pos()
         ], dtype=int)
     
     
@@ -104,7 +108,7 @@ def train():
         state_old = agent.get_state()
         last_move = agent.get_action(state_old)
         if agent.n_games < TRAIN_FOR:
-            reward, score, has_ended = game.run(last_move, graphics=True)
+            reward, score, has_ended = game.run(last_move, graphics=False)
         else:
             reward, score, has_ended = game.run(last_move)
         state_new = agent.get_state()
